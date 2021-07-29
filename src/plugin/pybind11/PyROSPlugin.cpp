@@ -3,6 +3,7 @@
 */
 
 #include "../deprecated/BodyPublisherItem.h"
+#include "../BodyROSItem.h"
 #include <cnoid/PyUtil>
 #include <cnoid/PyBase>
 
@@ -17,6 +18,9 @@ PYBIND11_MODULE(ROSPlugin, m)
     py::module::import("cnoid.BodyPlugin");
 
     py::class_<BodyPublisherItem, BodyPublisherItemPtr, ControllerItem>(m, "BodyPublisherItem")
+        .def(py::init<>())
+        ;
+    py::class_<BodyROSItem, BodyROSItemPtr, ControllerItem>(m, "BodyROSItem")
         .def(py::init<>())
         ;
 }

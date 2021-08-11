@@ -191,6 +191,7 @@ void BodyROSItem::createSensors(BodyPtr body)
         }
     }
     range_vision_sensor_publishers_.resize(rangeVisionSensors_.size());
+    range_vision_sensor_depth_publishers_.resize(rangeVisionSensors_.size());
     for (size_t i=0; i < rangeVisionSensors_.size(); ++i) {
         if (RangeCamera* sensor = rangeVisionSensors_[i]) {
             std::string name = sensor->name();
@@ -199,6 +200,11 @@ void BodyROSItem::createSensors(BodyPtr body)
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensor,
                                                           this, sensor, range_vision_sensor_publishers_[i]));
             ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+            range_vision_sensor_depth_publishers_[i] = it.advertise(name + "/depth", 1);
+            
+            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensorDepth,
+                                                          this, sensor, range_vision_sensor_depth_publishers_[i]));
+            ROS_INFO("Create RGBD camera %s (%f Hz) depth", sensor->name().c_str(), sensor->frameRate());
         }
     }
     range_sensor_publishers_.resize(rangeSensors_.size());
@@ -232,6 +238,8 @@ bool BodyROSItem::control()
     double updateSince = controlTime_ - joint_state_last_update_;
 
     if (updateSince > joint_state_update_period_) {
+        if (joint_state_publisher_.getNumSubscribers() == 0) {return true;}
+
         // publish current joint states
         joint_state_.header.stamp.fromSec(controlTime_);
 
@@ -253,6 +261,8 @@ bool BodyROSItem::control()
 
 void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     geometry_msgs::WrenchStamped force;
     force.header.stamp.fromSec(io->currentTime());
     force.header.frame_id = sensor->name();
@@ -268,6 +278,8 @@ void BodyROSItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publish
 
 void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     sensor_msgs::Imu gyro;
     gyro.header.stamp.fromSec(io->currentTime());
     gyro.header.frame_id = sensor->name();
@@ -280,6 +292,8 @@ void BodyROSItem::updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& p
 
 void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     sensor_msgs::Imu accel;
     accel.header.stamp.fromSec(io->currentTime());
     accel.header.frame_id = sensor->name();
@@ -292,6 +306,8 @@ void BodyROSItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& 
 
 void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     sensor_msgs::Image vision;
     vision.header.stamp.fromSec(io->currentTime());
     vision.header.frame_id = sensor->name();
@@ -314,6 +330,8 @@ void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
 
 void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     sensor_msgs::PointCloud2 range;
     range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -381,9 +399,61 @@ void BodyROSItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& p
     publisher.publish(range);
 }
 
+void BodyROSItem::updateRangeVisionSensorDepth(RangeCamera* sensor, image_transport::Publisher& publisher)
+{
+    if (publisher.getNumSubscribers() == 0) {return;}
+
+    sensor_msgs::Image vision;
+    vision.header.stamp.fromSec(io->currentTime());
+    vision.header.frame_id = sensor->name();
+
+    vision.width = sensor->resolutionX();
+    vision.height = sensor->resolutionY();
+#if 0
+    //16byte 符号なし整数の深度画像
+    vision.encoding = sensor_msgs::image_encodings::TYPE_16UC1;
+    vision.is_bigendian = false;
+    const int point_step = 2;
+    vision.step = point_step * vision.width;
+    vision.data.resize(vision.step * vision.height);
+
+    const std::vector<Vector3f>& points = sensor->constPoints();
+    unsigned char* dst = (unsigned char*)&(vision.data[0]);
+    for (size_t j = 0; j < points.size(); ++j) {
+        float z = - points[j].z();
+        uint16_t zu;
+        if (isfinite(z)) {
+            zu = z * 1000; //mm単位
+        } else {
+            zu = 0;
+        }
+        std::memcpy(&dst[0], &zu, point_step);
+        dst += point_step;
+    }
+#else
+    //32bit 浮動小数点数の深度画像
+    vision.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    vision.is_bigendian = false;
+    const int point_step = 4;
+    vision.step = point_step * vision.width;
+    vision.data.resize(vision.step * vision.height);
+
+    const std::vector<Vector3f>& points = sensor->constPoints();
+    unsigned char* dst = (unsigned char*)&(vision.data[0]);
+    for (size_t j = 0; j < points.size(); ++j) {
+        float z = - points[j].z();
+        std::memcpy(&dst[0], &z, point_step);
+        dst += point_step;
+    }
+#endif
+
+    publisher.publish(vision);
+}
 
 void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     sensor_msgs::LaserScan range;
     range.header.stamp.fromSec(io->currentTime());
     range.header.frame_id = sensor->name();
@@ -411,6 +481,8 @@ void BodyROSItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
 
 void BodyROSItem::update3DRangeSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
+    if (publisher.getNumSubscribers() == 0) {return;}
+
     sensor_msgs::PointCloud range;
     // Header Info
     range.header.stamp.fromSec(io->currentTime());
@@ -478,6 +550,10 @@ void BodyROSItem::stop_publish()
 
     for (i = 0; i < range_vision_sensor_publishers_.size(); i++) {
         range_vision_sensor_publishers_[i].shutdown();
+    }
+
+    for (i = 0; i < range_vision_sensor_depth_publishers_.size(); i++) {
+        range_vision_sensor_depth_publishers_[i].shutdown();
     }
 
     for (i = 0; i < range_sensor_publishers_.size(); i++) {

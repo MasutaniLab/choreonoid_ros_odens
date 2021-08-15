@@ -1,0 +1,5 @@
+<launch>
+  <node name="choreonoid" pkg="choreonoid_ros_odens" type="choreonoid"
+        args="$(find choreonoid_ros_odens)/../../devel/share/choreonoid-1.8/ODENS/script/SG1L-DoubleArmV7S-ROS_odens.py"
+        output="screen"/>
+</launch>

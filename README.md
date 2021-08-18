@@ -21,7 +21,7 @@
 
 - 端末で以下を実行．
   ```
-  sudo apt-get install python-catkin-tools qt5-default libqt5x11extras5-dev qt5-style-plugins ros-melodic-joy
+  sudo apt-get install python-catkin-tools qt5-default libqt5x11extras5-dev qt5-style-plugins ros-melodic-joy libzbar-dev
   cd ~  
   mkdir -p wrs_ws/src  
   cd wrs_ws  
@@ -32,6 +32,8 @@
   git clone https://github.com/WRS-TDRRC/WRS-TDRRC-2020SG1.git choreonoid/ext/WRS2020SG  
   git clone https://github.com/MasutaniLab/choreonoid_ext_ODENS.git choreonoid/ext/ODENS
   git clone https://github.com/MasutaniLab/double_arm_game_controller.git # 非公開リポジトリ
+  git clone https://github.com/MasutaniLab/double_arm_around_viewer.git # 非公開リポジトリ
+  git clone https://github.com/MasutaniLab/image_viewer_qr.git # 非公開リポジトリ
   choreonoid/misc/script/install-requisites-ubuntu-18.04.sh  
   cd ..    
   catkin config --cmake-args -DBUILD_CHOREONOID_EXECUTABLE=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_AGX_DYNAMICS_PLUGIN=ON -DBUILD_AGX_BODYEXTENSION_PLUGIN=ON -DBUILD_COMPETITION_PLUGIN=ON -DENABLE_CORBA=ON -DBUILD_CORBA_PLUGIN=ON -DBUILD_MULTICOPTER_PLUGIN=ON -DBUILD_MULTICOPTER_SAMPLES=ON -DBUILD_SCENE_EFFECTS_PLUGIN=ON -DCMAKE_CXX_STANDARD=14 -DUSE_PYTHON3=OFF  
@@ -45,33 +47,49 @@
 
 ## 動作確認
 
-- 端末1
-  ```
-  roscore
-  ```
-- 端末2
-  - AGXなしの場合
-    ```
-    cd ~/wrs_ws
-    rosrun choreonoid_ros_odens choreonoid devel/share/choreonoid-1.8/ODENS/script/SG1L-DoubleArmV7S-ROS_odens.py
-    ```
+- DUALSHOCK4をUSBポートに接続．
+- 端末1： 路面にQRコードの入った筒がある環境でDoubleArmのシミュレーション
   - AGXありの場合
     ```
-    cd ~/wrs_ws
-    rosrun choreonoid_ros_odens choreonoid devel/share/choreonoid-1.8/ODENS/script/SG1L-DoubleArmV7A-ROS_odens.py
+    roslaunch choreonoid_ros_odens qr_a.launch
     ```
-  - 端末3（Dualshock4をUSB接続）
+  - AGXなしの場合
+    ```
+    roslaunch choreonoid_ros_odens qr_s.launch
+    ```
+
+- 端末2： DUALSHOCK4で操縦
   ```
   roslaunch double_arm_game_controller joy.launch
   ```
 
+- 端末3： 台車固定の前向きカメラ画像の表示
+  ```
+  roslaunch image_viewer_qr frame_front.launch
+  ```
+
+- 端末4： アッパーアーム指先のカメラ画像の表示
+  ```
+  roslaunch image_viewer_qr handtip.launch
+  ```
+
+- 端末5： 疑似鳥瞰画像の表示
+  ```
+  rosrun double_arm_around_viewer double_arm_around_viewer_node
+  ```
+
+- 全て準備ができたら，Choreonoidのウィンドウの緑三角（初期位置からシミュレーション開始）をリックする．
+
 ## オリジナルからの改変
 
-- [RosBodyItemをPythonから使えるようにした．](https://github.com/MasutaniLab/choreonoid_ros_odens/commit/e2c889dba408a94d3d245012c79255ee31d1445c)
+- [BodyROSItemをPythonから使えるようにした．](https://github.com/MasutaniLab/choreonoid_ros_odens/commit/e2c889dba408a94d3d245012c79255ee31d1445c)
 
 - [DoubleArmV7用のコントローラ ROSDoubleArmV7Controller](https://github.com/MasutaniLab/choreonoid_ros_odens/blob/odens/src/controller/ROSDoubleArmV7Controller.cpp)
 
+- [BodyROSItemで深度画像を出力できるようにした](https://github.com/MasutaniLab/choreonoid_ros_odens/commit/0f88b74fdf938f487a4769c024e9e85c5b98b43d)
+
+- launchファイルを追加．
 
 ## 既知の問題点・TODO
 
-- COLOR_DEPTHのカメラが出力するPointCloud2メッセージは大きいので，別の手段を使う．
+- BodyROSItemでデバイスのオン・オフできるROSのサービスを追加する．

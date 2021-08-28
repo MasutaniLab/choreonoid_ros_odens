@@ -6,8 +6,8 @@
 ## 概要
 
 - WRS2020トンネル競技に出場するODENSチーム用の[choreonoid_ros](https://github.com/choreonoid/choreonoid_ros)．
-- [choreonoid_ros](https://github.com/choreonoid/choreonoid_ros)の最新ではなく，[2021年1月20日のコミット](https://github.com/choreonoid/choreonoid_ros/commit/fd00249a83cd5c6409360800847ffc1d8cf6ae09)からフォーク．
-- 一緒にビルドするChoreonoidは，最新版ではなく[WRS2020](https://github.com/choreonoid/choreonoid/tree/WRS2020)ブランチを使うこと．
+- [choreonoid_ros](https://github.com/choreonoid/choreonoid_ros)の[2021年1月20日のコミット](https://github.com/choreonoid/choreonoid_ros/commit/fd00249a83cd5c6409360800847ffc1d8cf6ae09)からフォークし，その後，[2021年5月22日のコミット](https://github.com/choreonoid/choreonoid_ros/commit/a5d09da882904095b08483439920ac828c4f7faa)をマージした．
+- 一緒にビルドするChoreonoidは，[WRS2020](https://github.com/choreonoid/choreonoid/tree/WRS2020)ブランチを使うこと．
 - このリポジトリは公開なので注意すること．
 
 ## 参考
@@ -36,7 +36,7 @@
   git clone https://github.com/MasutaniLab/image_viewer_qr.git # 非公開リポジトリ
   choreonoid/misc/script/install-requisites-ubuntu-18.04.sh  
   cd ..    
-  catkin config --cmake-args -DBUILD_CHOREONOID_EXECUTABLE=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_AGX_DYNAMICS_PLUGIN=ON -DBUILD_AGX_BODYEXTENSION_PLUGIN=ON -DBUILD_COMPETITION_PLUGIN=ON -DENABLE_CORBA=ON -DBUILD_CORBA_PLUGIN=ON -DBUILD_MULTICOPTER_PLUGIN=ON -DBUILD_MULTICOPTER_SAMPLES=ON -DBUILD_SCENE_EFFECTS_PLUGIN=ON -DCMAKE_CXX_STANDARD=14 -DUSE_PYTHON3=OFF  
+  catkin config --cmake-args -DBUILD_COMPETITION_PLUGIN=ON -DBUILD_AGX_DYNAMICS_PLUGIN=ON -DBUILD_AGX_BODYEXTENSION_PLUGIN=ON -DBUILD_SCENE_EFFECTS_PLUGIN=ON -DBUILD_MULTICOPTER_PLUGIN=ON -DBUILD_MULTICOPTER_SAMPLES=ON -DBUILD_CHOREONOID_EXECUTABLE=OFF -DUSE_PYTHON3=OFF -DCMAKE_BUILD_TYPE=Release -DENABLE_INSTALL_RPATH_USE_LINK_PATH=ON
   catkin build 
   ```
 

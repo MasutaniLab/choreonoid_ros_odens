@@ -223,10 +223,12 @@ void BodyROSItem::createSensors(BodyPtr body)
             range_vision_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensor,
                                                           this, sensor, range_vision_sensor_publishers_[i]));
+#if 0 // rangeVisionSensors_に含まれるデバイスは，visionSensors_にも含まれるので，switchは不要ではないか？
             boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
                 = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
             range_vision_sensor_switch_servers_.push_back(
                 rosnode_->advertiseService(name + "/switch", requestCallback));
+#endif
             ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
             range_vision_sensor_depth_publishers_[i] = it.advertise(name + "/depth", 1);
             
@@ -360,9 +362,11 @@ void BodyROSItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
     }
     vision.is_bigendian = 0;
     vision.step = sensor->image().width() * sensor->image().numComponents();
-    vision.data.resize(vision.step * vision.height);
-    std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
-    publisher.publish(vision);
+    if (vision.step * vision.height != 0) {
+        vision.data.resize(vision.step * vision.height);
+        std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
+        publisher.publish(vision);
+    }
 }
 
 

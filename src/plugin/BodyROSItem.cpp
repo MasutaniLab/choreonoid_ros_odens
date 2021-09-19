@@ -223,18 +223,18 @@ void BodyROSItem::createSensors(BodyPtr body)
             range_vision_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud2>(name + "/point_cloud", 1);
             sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensor,
                                                           this, sensor, range_vision_sensor_publishers_[i]));
-#if 0 // rangeVisionSensors_に含まれるデバイスは，visionSensors_にも含まれるので，switchは不要ではないか？
-            boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
-                = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
-            range_vision_sensor_switch_servers_.push_back(
-                rosnode_->advertiseService(name + "/switch", requestCallback));
-#endif
-            ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
-            range_vision_sensor_depth_publishers_[i] = it.advertise(name + "/depth", 1);
-            
-            sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensorDepth,
-                                                          this, sensor, range_vision_sensor_depth_publishers_[i]));
-            ROS_INFO("Create RGBD camera %s (%f Hz) depth", sensor->name().c_str(), sensor->frameRate());
+            // adds a server only for the camera whose type is COLOR_DEPTH or POINT_CLOUD.
+            // Without this exception, a new service server may be a duplicate
+            // of one added to 'vision_sensor_switch_servers_'.
+            if (sensor->imageType() == Camera::NO_IMAGE) {
+                boost::function<bool (std_srvs::SetBoolRequest&, std_srvs::SetBoolResponse&)> requestCallback
+                    = boost::bind(&BodyROSItem::switchDevice, this, _1, _2, sensor);
+                range_vision_sensor_switch_servers_.push_back(
+                    rosnode_->advertiseService(name + "/switch", requestCallback));
+                ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+            } else {
+                ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+            }
         }
     }
     range_sensor_publishers_.resize(rangeSensors_.size());

@@ -78,7 +78,7 @@
   rosrun double_arm_around_viewer double_arm_around_viewer_node
   ```
 
-- 全て準備ができたら，Choreonoidのウィンドウの緑三角（初期位置からシミュレーション開始）をリックする．
+- 全て準備ができたら，Choreonoidのウィンドウの緑三角（初期位置からシミュレーション開始）をクリックする．
 
 ## オリジナルからの改変
 

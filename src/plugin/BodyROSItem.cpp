@@ -234,6 +234,11 @@ void BodyROSItem::createSensors(BodyPtr body)
                 ROS_INFO("Create depth camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
             } else {
                 ROS_INFO("Create RGBD camera %s (%f Hz)", sensor->name().c_str(), sensor->frameRate());
+
+                range_vision_sensor_depth_publishers_[i] = it.advertise(name + "/depth", 1);
+                sensor->sigStateChanged().connect(boost::bind(&BodyROSItem::updateRangeVisionSensorDepth,
+                                                            this, sensor, range_vision_sensor_depth_publishers_[i]));
+                ROS_INFO("Create RGBD camera %s (%f Hz) depth", sensor->name().c_str(), sensor->frameRate());
             }
         }
     }

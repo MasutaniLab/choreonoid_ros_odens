@@ -456,7 +456,7 @@ void BodyROSItem::updateRangeVisionSensorDepth(RangeCamera* sensor, image_transp
 
     vision.width = sensor->resolutionX();
     vision.height = sensor->resolutionY();
-#if 0
+#if 1
     //16byte 符号なし整数の深度画像
     vision.encoding = sensor_msgs::image_encodings::TYPE_16UC1;
     vision.is_bigendian = false;
